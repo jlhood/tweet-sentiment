@@ -1,147 +1,34 @@
-# tweet-sentiment
+## Tweet Sentiment
 
-This is a sample template for tweet-sentiment - Below is a brief explanation of what we have generated for you:
+This serverless app processes events from the [aws-serverless-twitter-event-source](https://github.com/awslabs/aws-serverless-twitter-event-source) serverless app, calls [Amazon Comprehend](https://aws.amazon.com/comprehend/) to do sentiment analysis on the tweet text, and publishes the sentiment scores as custom metrics to [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) Metrics.
 
-```bash
-.
-├── README.md                               <-- This instructions file
-├── pom.xml                                 <-- Java dependencies
-├── src
-│   ├── main
-│   │   └── java
-│   │       └── helloworld                  <-- Source code for a lambda function
-│   │           ├── App.java                <-- Lambda function code
-│   │           └── GatewayResponse.java    <-- POJO for API Gateway Responses object 
-│   └── test                                <-- Unit tests
-│       └── java
-│           └── helloworld
-│               └── AppTest.java
-└── template.yaml
-```
+This app was built during an [AWS live coding session on Twitch](https://www.twitch.tv/videos/272408977).
 
-## Requirements
+## Architecture
 
-* AWS CLI already configured with at least PowerUser permission
-* [Java SE Development Kit 8 installed](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
-* [Docker installed](https://www.docker.com/community-edition)
-* [Maven](https://maven.apache.org/install.html)
+![App Architecture](https://github.com/jlhood/tweet-sentiment/raw/master/images/app-architecture.png)
 
-## Setup process
+1. The aws-serverless-twitter-event-source app periodically invokes the TweetSentiment Lambda function to process tweet search results.
+1. The TweetSentiment Lambda calls Amazon Comprehend to get sentiment scores on the tweet text and then sends the scores as metrics to CloudWatch Metrics.
 
-### Installing dependencies
+## Installation Steps
 
-We use `maven` to install our dependencies and package our application into a JAR file:
+### Install the tweet-sentiment app
 
-```bash
-mvn package
-```
-### Local development
+1. [Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and login
+1. Go to this app's page on the [Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:277187709615:applications~tweet-sentiment) and click "Deploy"
+1. Go to the [AWS Lambda Console](http://console.aws.amazon.com/lambda/home) and note down the name of the TweetSentiment function that was created by the deployment.
 
-**Invoking function locally through local API Gateway**
+### Install the aws-serverless-twitter-event-source app
 
-```bash
-sam local start-api
-```
+The tweet-sentiment app uses the [aws-serverless-twitter-event-source](https://github.com/awslabs/aws-serverless-twitter-event-source) app as a source of Tweet data. So after deploying the tweet-sentiment app to your account, you need to install the aws-serverless-twitter-event-source app to send twitter events to the tweet-sentiment app.
 
-If the previous command ran successfully you should now be able to hit the following local endpoint to invoke your function `http://localhost:3000/hello`
+Refer to the aws-serverless-twitter-event-source [README](https://github.com/awslabs/aws-serverless-twitter-event-source/blob/master/README.md) for general installation steps. There are some parameter settings specific to this app:
 
-**SAM CLI** is used to emulate both Lambda and API Gateway locally and uses our `template.yaml` to understand how to bootstrap this environment (runtime, where the source code is, etc.) - The following excerpt is what the CLI will read in order to initialize an API and its routes:
+1. `TweetProcessorFunctionName` - This should be set to the name of the TweetSentiment function that you noted down when installing the tweet-sentiment app.
+1. `BatchSize` - It's fine to use the aws-serverless-twitter-event-source default value of 15.
+1. `SearchText` - This controls what tweets are pulled in for sentiment analysis. The search used during the live stream was `#AWSLambda -filter:nativeretweets`. However, you can use whatever Twitter search you'd like to perform sentiment analysis on. Note, if you want to change the SearchText after deploying the app, you can always do this via the AWS Lambda Console by finding the TwitterSearchPoller lambda created by the aws-serverless-twitter-event-source app and changing its `SEARCH_TEXT` environment variable value.
 
-```yaml
-...
-Events:
-    HelloWorld:
-        Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-        Properties:
-            Path: /hello
-            Method: get
-```
+## License Summary
 
-## Packaging and deployment
-
-AWS Lambda Java runtime accepts either a zip file or a standalone JAR file - We use the latter in this example. SAM will use `CodeUri` property to know where to look up for both application and dependencies:
-
-```yaml
-...
-    HelloWorldFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            CodeUri: target/HelloWorld-1.0.jar
-            Handler: helloworld.App::handleRequest
-```
-
-Firstly, we need a `S3 bucket` where we can upload our Lambda functions packaged as ZIP before we deploy anything - If you don't have a S3 bucket to store code artifacts then this is a good time to create one:
-
-```bash
-aws s3 mb s3://BUCKET_NAME
-```
-
-Next, run the following command to package our Lambda function to S3:
-
-```bash
-sam package \
-    --template-file template.yaml \
-    --output-template-file packaged.yaml \
-    --s3-bucket REPLACE_THIS_WITH_YOUR_S3_BUCKET_NAME
-```
-
-Next, the following command will create a Cloudformation Stack and deploy your SAM resources.
-
-```bash
-sam deploy \
-    --template-file packaged.yaml \
-    --stack-name tweet-sentiment \
-    --capabilities CAPABILITY_IAM
-```
-
-> **See [Serverless Application Model (SAM) HOWTO Guide](https://github.com/awslabs/serverless-application-model/blob/master/HOWTO.md) for more details in how to get started.**
-
-After deployment is complete you can run the following command to retrieve the API Gateway Endpoint URL:
-
-```bash
-aws cloudformation describe-stacks \
-    --stack-name tweet-sentiment \
-    --query 'Stacks[].Outputs'
-```
-
-## Testing
-
-We use `JUnit` for testing our code and you can simply run the following command to run our tests:
-
-```bash
-mvn test
-```
-
-# Appendix
-
-## AWS CLI commands
-
-AWS CLI commands to package, deploy and describe outputs defined within the cloudformation stack:
-
-```bash
-sam package \
-    --template-file template.yaml \
-    --output-template-file packaged.yaml \
-    --s3-bucket REPLACE_THIS_WITH_YOUR_S3_BUCKET_NAME
-
-sam deploy \
-    --template-file packaged.yaml \
-    --stack-name tweet-sentiment \
-    --capabilities CAPABILITY_IAM \
-    --parameter-overrides MyParameterSample=MySampleValue
-
-aws cloudformation describe-stacks \
-    --stack-name tweet-sentiment --query 'Stacks[].Outputs'
-```
-
-## Bringing to the next level
-
-Here are a few ideas that you can use to get more acquainted as to how this overall process works:
-
-* Create an additional API resource (e.g. /hello/{proxy+}) and return the name requested through this new path
-* Update unit test to capture that
-* Package & Deploy
-
-Next, you can use the following resources to know more about beyond hello world samples and how others structure their Serverless applications:
-
-* [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/)
+This code is made available under the MIT license. See the LICENSE file.
