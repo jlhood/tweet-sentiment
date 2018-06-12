@@ -3,3 +3,4 @@
 target/
 .*.sw[op]
 dependency-reduced-pom.xml
+packaged.yaml

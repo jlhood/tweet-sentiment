@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sam package --profile=twitch --region=us-east-1 --template-file template.yaml --s3-bucket jlhood-sam-us-east-1 --output-template packaged.yaml
