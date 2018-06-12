@@ -5,23 +5,17 @@ Description: >
 
   Performs tweet sentiment analysis, logs sentiment scores to CW Metrics
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 20
-
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  TweetSentiment:
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: target/HelloWorld-1.0.jar
-      Handler: helloworld.App::handleRequest
+      CodeUri: target/TweetSentiment-1.0.0.jar
+      Handler: com.amazonaws.serverless.tweetsentiment.lambda.TweetSentimentHandler::handleRequest
       Runtime: java8
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-        Variables:
-          PARAM1: VALUE
+      MemorySize: 768
+      Timeout: 60
 
 Outputs:
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
+  TweetSentimentFunction:
+    Description: "TweetSentiment Lambda Function ARN"
+    Value: !GetAtt TweetSentiment.Arn
