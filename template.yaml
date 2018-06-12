@@ -14,6 +14,9 @@ Resources:
       Runtime: java8
       MemorySize: 768
       Timeout: 60
+      Policies:
+        - ComprehendBasicAccessPolicy: {}
+        - CloudWatchPutMetricPolicy: {}
 
 Outputs:
   TweetSentimentFunction:
