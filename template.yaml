@@ -9,7 +9,7 @@ Resources:
   TweetSentiment:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: target/TweetSentiment-1.0.0.jar
+      CodeUri: target/TweetSentiment-1.0.2.jar
       Handler: com.amazonaws.serverless.tweetsentiment.lambda.TweetSentimentHandler::handleRequest
       Runtime: java8
       MemorySize: 768
